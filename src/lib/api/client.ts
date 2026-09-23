@@ -5,6 +5,24 @@ type ApiRequestOptions = RequestInit & {
   token?: string;
 };
 
+type ApiErrorResponse = {
+  message?: string;
+  errors?: Record<string, string[]>;
+};
+
+export class ApiError extends Error {
+  errors: Record<string, string[]>;
+
+  constructor(
+    message: string,
+    errors: Record<string, string[]> = {},
+  ) {
+    super(message);
+    this.name = "ApiError";
+    this.errors = errors;
+  }
+}
+
 export async function apiClient<T>(
   endpoint: string,
   options: ApiRequestOptions = {},
@@ -28,13 +46,21 @@ export async function apiClient<T>(
     headers,
   });
 
-  const data = await response.json().catch(() => null);
+  const data = (await response.json().catch(() => null)) as
+    | ApiErrorResponse
+    | T
+    | null;
 
   if (!response.ok) {
-    throw new Error(
-      data?.message ?? "Something went wrong. Please try again.",
+    const errorData = data as ApiErrorResponse | null;
+
+    throw new ApiError(
+      errorData?.message ??
+        "Something went wrong. Please try again.",
+      errorData?.errors ?? {},
     );
   }
 
   return data as T;
 }
+

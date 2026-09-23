@@ -35,7 +35,7 @@ export default function Home() {
 
           <nav className="hidden items-center gap-8 md:flex">
             <Link 
-              href="#specialists"
+              href="/specialist"
               className="text-sm font-medium text-muted transition-colors hover:text-foreground"
             >
               Find a Specialist
@@ -97,7 +97,7 @@ export default function Home() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/specialists"
+                href="/specialist"
                 className="inline-flex items-center justify-center rounded-lg bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark"
               >
                 Find a specialist
