@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/src/components/ui/Button";
 import { Input } from "@/src/components/ui/Input";
 import { useAuth } from "@/src/components/providers/AuthProvider";
+import { ApiError } from "@/src/lib/api/client";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -18,12 +19,16 @@ export default function RegisterPage() {
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
 
   const [error, setError] = useState("");
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event: React.FormEvent<HTMLFormElement>,
+  ) {
     event.preventDefault();
 
     setError("");
+    setValidationErrors([]);
 
     if (password !== passwordConfirmation) {
       setError("Passwords do not match.");
@@ -48,11 +53,21 @@ export default function RegisterPage() {
         router.push("/admin/dashboard");
       }
     } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Unable to create your account. Please try again.",
-      );
+      if (error instanceof ApiError) {
+        const messages = Object.values(error.errors).flat();
+
+        if (messages.length > 0) {
+          setValidationErrors(messages);
+        } else {
+          setError(error.message);
+        }
+      } else {
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Unable to create your account. Please try again.",
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -78,8 +93,8 @@ export default function RegisterPage() {
             </h1>
 
             <p className="mt-6 text-lg leading-8 text-teal-50">
-              Create your patient account and get started with finding
-              specialists and managing appointments.
+              Create your patient account and get started with
+              finding specialists and managing appointments.
             </p>
           </div>
 
@@ -109,16 +124,29 @@ export default function RegisterPage() {
               </p>
             </div>
 
-            {error && (
+            {(error || validationErrors.length > 0) && (
               <div
                 role="alert"
                 className="mb-5 rounded-lg border border-error/20 bg-red-50 px-4 py-3 text-sm text-error"
               >
-                {error}
+                {error && <p>{error}</p>}
+
+                {validationErrors.length > 0 && (
+                  <ul className="space-y-1">
+                    {validationErrors.map((message, index) => (
+                      <li key={`${message}-${index}`}>
+                        • {message}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form
+              onSubmit={handleSubmit}
+              className="space-y-5"
+            >
               <Input
                 label="Full name"
                 name="name"
@@ -126,7 +154,9 @@ export default function RegisterPage() {
                 placeholder="John Doe"
                 autoComplete="name"
                 value={name}
-                onChange={(event) => setName(event.target.value)}
+                onChange={(event) =>
+                  setName(event.target.value)
+                }
                 required
               />
 
@@ -137,7 +167,9 @@ export default function RegisterPage() {
                 placeholder="you@example.com"
                 autoComplete="email"
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(event) =>
+                  setEmail(event.target.value)
+                }
                 required
               />
 
@@ -148,7 +180,9 @@ export default function RegisterPage() {
                 placeholder="Create a password"
                 autoComplete="new-password"
                 value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                onChange={(event) =>
+                  setPassword(event.target.value)
+                }
                 required
               />
 
@@ -171,7 +205,9 @@ export default function RegisterPage() {
                 className="w-full"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Creating account..." : "Create account"}
+                {isSubmitting
+                  ? "Creating account..."
+                  : "Create account"}
               </Button>
             </form>
 
